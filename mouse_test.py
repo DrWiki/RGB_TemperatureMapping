@@ -90,7 +90,8 @@ if __name__ == '__main__':
         if ret==False:
             break
         frame = cv2.resize(frame,(640,480) )
-        frame = cv2.medianBlur(frame,9)
+        # frame = cv2.medianBlur(frame,9)
+        frame = cv2.blur(frame,(19,19))
         img = frame.copy()
         cv2.imshow("frame", img)
         if frame_num == 0:
