@@ -1,7 +1,8 @@
 import cv2
 import numpy as np
 import os
-
+import csv
+import time
 points = list()
 linep = list()
 # img = np.zeros([1000, 1000])
@@ -69,27 +70,36 @@ def mouse_callback(event, x, y, flags, param):
 if __name__ == '__main__':
     topic = "TestUDP"
     folder = f"./log/{topic}"
-    is_need_setting = False
-    # fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    fourcc = cv2.VideoWriter_fourcc(*'XVID')
-    out_origin = cv2.VideoWriter("./video/1.avi", fourcc, 25.0,(int(640), int(480)), True)
+
     # 判断结果
     if not os.path.exists(folder):
         os.makedirs(folder)
         print("OK_folder")
+
+    name = topic + "_" + time.strftime("%Y-%m-%d-%H_%M_%S", time.localtime())
+    csvfile = open(f"{folder}/Curve_{name}.csv", "w")
+    writer = csv.writer(csvfile)
+    writer.writerow(["frame_num", "Area"])
+    is_need_setting = False
+    # fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    fourcc = cv2.VideoWriter_fourcc(*'XVID')
+    out_origin = cv2.VideoWriter("./video/1.avi", fourcc, 25.0,(int(640), int(480)), True)
+
     # name = topic + "_" + time.strftime("%Y-%m-%d-%H_%M_%S", time.localtime())
 
     cv2.namedWindow('frame')
     cv2.namedWindow('Plot_frame',cv2.WINDOW_NORMAL)
-    cv2.setMouseCallback('frame', mouse_callback)
+
+    # cv2.setMouseCallback('frame', mouse_callback)
+
     vid = cv2.VideoCapture('./video/WIN_20221211_13_55_36_Pro.mp4')
+
     frame_num = 0
     frame_origin = None
     diff = None
     Plot_frame = None
     diff_temp = None
     diff_temp_gray = None
-
     while True:
         ret, frame = vid.read()
         if ret==False:
@@ -134,27 +144,33 @@ if __name__ == '__main__':
 
 
             diff_temp_gray = cv2.cvtColor(diff, cv2.COLOR_BGR2GRAY)
-            _, diff_temp = cv2.threshold(diff_temp_gray, 7, 255, cv2.THRESH_BINARY)
+            _, diff_temp = cv2.threshold(diff_temp_gray, 10, 255, cv2.THRESH_BINARY)
             # diff_temp = cv2.inRange(diff,(7,7,7),(255,255,255))
             # Find the contours in the image
             # continue
             contours, hierarchy = cv2.findContours(diff_temp, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
             # # Draw the bounding rectangle of each contour on the original image
             # for contour in contours:
+            maxA = 0
+            maxAid = -1
+
             for i in range(len(contours)):
 
-                x, y, w, h = cv2.boundingRect(contours[i])
                 a = cv2.contourArea(contours[i])
                 if a < 5000:
                     continue
-                print(a)
-                cv2.drawContours(diff, contours, i, (0, 0, 255), 3)
-
+                if a > maxA:
+                    maxA = a
+                    maxAid = i
+            if maxAid>=0:
+                print(maxA)
+                cv2.drawContours(diff, contours, maxAid, (0, 0, 255), 3)
+                x, y, w, h = cv2.boundingRect(contours[maxAid])
                 cv2.rectangle(diff, (x, y), (x + w, y + h), (255, 0, 0), 2)
+                writer.writerows([[frame_num, maxA]])
+
 
         cv2.putText(img,str(frame_num),(20,20),1,1,(255,255,0),2)
-
-
         cv2.imshow("frame", img)
         if Plot_frame is not None:
             cv2.imshow("Plot_frame", Plot_frame)
@@ -165,4 +181,4 @@ if __name__ == '__main__':
         if diff_temp_gray is not None:
             cv2.imshow("diff_temp_gray", diff_temp_gray)
         out_origin.write(diff)
-        key = cv2.waitKey(100)
+        key = cv2.waitKey(1)
