@@ -123,23 +123,15 @@ if __name__ == '__main__':
     diff_mask_gray = None
     diff_mask_gray_cv = None
     last_frame = []
+    kpc = None
+
+
     while True:
         ret, frame = vid.read()
         if ret==False:
             break
         frame = cv2.resize(frame,(640,480) )
-        # frame = cv2.medianBlur(frame,9)
         frame = cv2.blur(frame,(33,33))
-        # frame_gray = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
-        # frame_gray = frame[:,:,1]
-        # laplace_x = cv2.Laplacian(frame_gray, cv2.CV_64F)
-        # laplace_my_x = d_image_xy(frame_gray,'x')
-        # # laplace_my_x = d_image_xy(laplace_my_x,'x')
-        #
-        # laplace_my_y = d_image_xy(frame_gray,'y')
-        # # laplace_my_y = d_image_xy(laplace_my_y,'y')
-        #
-        # laplace_my = laplace_my_y+laplace_my_x
         img = frame.copy()
         img_pro = frame.copy()
         cv2.imshow("frame", img)
@@ -185,7 +177,6 @@ if __name__ == '__main__':
                 cv2.circle(img,[linep[i][0],linep[i][1]],1,(255,255,0),-1)
 
             diff_temp_gray = cv2.cvtColor(diff, cv2.COLOR_BGR2GRAY)
-
             _, diff_temp = cv2.threshold(diff_temp_gray, 10, 255, cv2.THRESH_BINARY)
             # diff_temp = cv2.inRange(diff,(7,7,7),(255,255,255))
             # Find the contours in the image
@@ -195,9 +186,7 @@ if __name__ == '__main__':
             # for contour in contours:
             maxA = 0
             maxAid = -1
-
             for i in range(len(contours)):
-
                 a = cv2.contourArea(contours[i])
                 if a < 5000:
                     continue
@@ -205,34 +194,24 @@ if __name__ == '__main__':
                     maxA = a
                     maxAid = i
             if maxAid>=0:
-                print(maxA)
-
+                # print(maxA)
                 mask = np.zeros(diff_temp_gray.shape, dtype='uint8')
                 cv2.drawContours(mask, contours, maxAid, 255, -1)
                 diff_mask = cv2.bitwise_and(img_pro, img_pro, mask=mask)
-                diff_mask_gray_cv = cv2.cvtColor(diff_mask, cv2.COLOR_BGR2GRAY)
                 diff_mask_gray = cvtRGBT(diff_mask,1,1,-1).astype('uint8')
-                # diff_mask_gray = diff_mask_gray.astype("uint8")
-                #
                 laplace_x = cv2.Laplacian(diff_mask_gray, cv2.CV_64F)
-                #
-                #
-                laplace_my_x = d_image_xy(diff_mask_gray, 'x')
-                # laplace_my_x = d_image_xy(laplace_my_x,'x')
-
-                laplace_my_y = d_image_xy(diff_mask_gray, 'y')
-                # laplace_my_y = d_image_xy(laplace_my_y,'y')
-
-                laplace_my = ((laplace_my_y + laplace_my_x)).astype('uint8')
-
+                # print(laplace_x.dtype)
+                # laplace_x = laplace_x.astype('uint8')
+                # kernal = cv2.getStructuringElement(cv2.MORPH_RECT,(7,7))
+                # laplace_x = cv2.dilate(laplace_x,kernal)
+                # laplace_x = cv2.erode(laplace_x,kernal)
                 cv2.drawContours(diff, contours, maxAid, (0, 0, 255), 3)
                 x, y, w, h = cv2.boundingRect(contours[maxAid])
                 cv2.rectangle(diff, (x, y), (x + w, y + h), (255, 0, 0), 2)
-
-
                 writer.writerows([[frame_num, maxA]])
 
-        if last_frame.__len__()<100:
+        Time_int = 10
+        if last_frame.__len__()<Time_int:
             last_frame.append(frame.copy())
         else:
             last_frame.pop(0)
@@ -248,15 +227,17 @@ if __name__ == '__main__':
             cv2.imshow("Plot_frame", Plot_frame)
         if diff is not None:
             cv2.imshow("frame_abs", diff)
-        if diff_temp is not None:
+        if diff_temp is not None and False:
+
             cv2.imshow("diff_temp", diff_temp)
-        if diff_temp_gray is not None:
+        if diff_temp_gray is not None and False:
             cv2.imshow("diff_temp_gray", diff_temp_gray)
+
         if laplace_x is not None:
             cv2.imshow("laplace_x", laplace_x)
         if laplace_my is not None:
             cv2.imshow("laplace_my", laplace_my)
-        if diff_mask is not None:
+        if diff_mask is not None and False:
             cv2.imshow("diff_mask", diff_mask)
         if diff_mask_gray is not None:
             cv2.imshow("diff_mask_gray", diff_mask_gray)
@@ -270,8 +251,11 @@ if __name__ == '__main__':
 
         # if last_frame is not None:
         #     cv2.imshow("last_frame", cv2.absdiff(last_frame,frame))
-        if last_frame.__len__()==100:
-            cv2.imshow("last_frame", cv2.absdiff(last_frame[80], frame)*5)
+        if last_frame.__len__()==Time_int and laplace_x is not None:
+            cv2.imshow("last_frame", cv2.absdiff(last_frame[0], frame)*5)
+            kpc = (cvtRGBT((frame.astype('float')-last_frame[0].astype('float')),1,1,-1)/(laplace_x+0.001))/100000
+            cv2.imshow("KKKKKKK", kpc)
+            print("Kpc:   ",np.sum(np.sum(kpc,0),0))
 
         out_origin.write(diff)
-        key = cv2.waitKey(50)
+        key = cv2.waitKey(10)
