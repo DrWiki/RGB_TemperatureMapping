@@ -77,7 +77,7 @@ if __name__ == '__main__':
         print("OK_folder")
 
     name = topic + "_" + time.strftime("%Y-%m-%d-%H_%M_%S", time.localtime())
-    csvfile = open(f"{folder}/Curve_{name}.csv", "w")
+    csvfile = open(f"{folder}/Curve_{name}.csv", "w",encoding='utf8',newline='')
     writer = csv.writer(csvfile)
     writer.writerow(["frame_num", "Area"])
     is_need_setting = False

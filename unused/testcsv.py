@@ -14,16 +14,30 @@ import time
 #     # 将数据写入
 #     writer.writerows(data)
 
-topic = "TestUDP"
-folder = f"./log/{topic}"
-
-# 判断结果
-if not os.path.exists(folder):
-    os.makedirs(folder)
-    print("OK_folder")
-
-name = topic + "_" + time.strftime("%Y-%m-%d-%H_%M_%S", time.localtime())
-csvfile = open(f"{folder}/Curve_{name}.csv", "w")
-writer = csv.writer(csvfile)
-writer.writerow(["frame_num", "Area"])
-writer.writerow([1, 2])
+# topic = "TestUDP"
+# folder = f"./log/{topic}"
+#
+# # 判断结果
+# if not os.path.exists(folder):
+#     os.makedirs(folder)
+#     print("OK_folder")
+#
+# name = topic + "_" + time.strftime("%Y-%m-%d-%H_%M_%S", time.localtime())
+# csvfile = open(f"{folder}/Curve_{name}.csv", "w")
+# writer = csv.writer(csvfile)
+# writer.writerow(["frame_num", "Area"])
+# writer.writerows([[1, 2]])
+# # writer.writerow([1, 2])
+# # writer.writerow([1, 2])
+# # writer.writerow([1, 2])
+# # writer.writerow([1, 2])
+import csv
+data = [
+    (1,"cat",18),
+    (2,"dog",17),
+    (3,"tigger",16),
+]
+f = open('test.csv','a',encoding='utf8',newline='')
+writer = csv.writer(f)  # csv.writer()中可以传一个文件对象
+for line in data: # 该data既可以是列表嵌套列表的数据类型也可以是列表嵌套元组的数据类型
+    writer.writerow(line)
