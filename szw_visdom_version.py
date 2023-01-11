@@ -121,6 +121,7 @@ if __name__ == '__main__':
 
     vid = cv2.VideoCapture('./video/WIN_20221211_13_55_36_Pro.mp4')
 
+
     frame_num = 0
     frame_origin = None
     diff = None
@@ -222,12 +223,14 @@ if __name__ == '__main__':
                 cv2.rectangle(diff, (x, y), (x + w, y + h), (255, 0, 0), 2)
                 writer.writerows([[frame_num, maxA]])
 
+
         Time_int = 10
         if last_frame.__len__()<Time_int:
             last_frame.append(frame.copy())
         else:
             last_frame.pop(0)
             last_frame.append(frame.copy())
+
 
         cv2.putText(img,str(frame_num),(20,20),1,1,(255,255,0),2)
         cv2.imshow("frame", img)
