@@ -1,6 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.interpolate import make_interp_spline
+from scipy import interpolate
+import os
+import os.path
 
 
 # plot double lines
@@ -32,6 +35,7 @@ def plot_double_lines(n, x, y1, pic_name, temp, flag_smooth):
     plt.ylim(10, 40)
 
 
+# plot smooth curve
 def plot_smooth_curve(n, x, y1, pic_name, temp, flag_smooth):
     # initialize plot parameters
     print('picture name: %s, len of data: %d' % (pic_name, n))
@@ -39,17 +43,29 @@ def plot_smooth_curve(n, x, y1, pic_name, temp, flag_smooth):
     plt.subplots_adjust(left=0.06, right=0.94, top=0.92, bottom=0.08)
 
     # 对x和y1进行插值
-    mem_x, mem_y = x[0], y1[0]
+    mem_x, mem_y1 = x[0], y1[0]
     x_smooth, y1_smooth = list(), list()
     x_smooth.append(mem_x)
-    y1_smooth.append(mem_y)
+    y1_smooth.append(mem_y1)
     for i, j in zip(x, y1):
-        if i != mem_x:
-            x_smooth.append(mem_x)
-            y1_smooth.append(mem_y)
+        if j != mem_y1:
+            x_smooth.append(i)
+            y1_smooth.append(j)
+            mem_x, mem_y1 = i, j
+    x_smooth.append(x[-1])
+    y1_smooth.append(y1_smooth[-1])
     # plot curve 1
     if flag_smooth:
-        plt.plot(x_smooth, y1_smooth, label=temp)
+        x_smooth, y1_smooth = np.array(x_smooth), np.array(y1_smooth)
+        print(x_smooth.min(), x_smooth.max())
+        x_smooth2 = np.linspace(x_smooth.min(), x_smooth.max(), 500)
+
+        # y1_smooth2 = interpolate.interp1d(x_smooth, y1_smooth)(x_smooth2)
+
+        f = interpolate.interp1d(x_smooth, y1_smooth, kind=1)
+        y1_smooth2 = f(x_smooth2)
+
+        plt.plot(x_smooth2, y1_smooth2, label=temp)
     else:
         plt.plot(x, y1, label=temp)
 
@@ -69,17 +85,14 @@ def plot_smooth_curve(n, x, y1, pic_name, temp, flag_smooth):
 
 
 if __name__ == '__main__':
-    # xs = np.array([1, 2, 3, 4, 5, 6, 7, 8])
-    # y1s = np.array([8.0, 6.0, 5.7, 5.6, 5.2, 1.0, 0.8, 0.6])
-    # y2s = np.array([0.9, 0.8, 0.75, 0.41, 0.03, 0.01, 0.0, 1.0])
-    temps = [15, 18, 19, 20, 25, 28, 30, 37, 38]
+    log_dir = './'
 
-    for temp in temps:
-        file_name = f'temperature_604_951_{temp}.npy'
-        temp_seq = np.load(f'{file_name}')
-        xs = np.arange(1, len(temp_seq) + 1)
-
-        plot_double_lines(len(xs), xs, temp_seq, 'Visualization of Linking Prediction', temp, flag_smooth=True)
+    for parent, dirnames, filenames in os.walk(log_dir):
+        for filename in filenames:
+            if filename[-3:] == 'npy':
+                temp_seq = np.load(f'{filename}')
+                xs = np.arange(1, len(temp_seq) + 1)
+                plot_smooth_curve(len(xs), xs, temp_seq, 'Visualization of Linking Prediction', filename[-21:-19], flag_smooth=False)
 
     # show the picture
     plt.show()
